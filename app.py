@@ -1,5 +1,11 @@
 from flask import Flask, request, jsonify
+from werkzeug.utils import secure_filename
+import tempfile
+import os
 import whisper
+
+# Define the allowed extensions for audio files
+ALLOWED_EXTENSIONS = {'wav', 'mp3', 'flac', 'ogg', 'm4a'}
 
 LANGUAGES = {
     "en": "english",
@@ -131,22 +137,37 @@ model = whisper.load_model("base")
 def index():
     return app.send_static_file('index.html')
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
 @app.route('/transcribe', methods=['POST'])
 def transcribe():
     if 'file' not in request.files:
         return jsonify({'error': 'No file provided'}), 400
 
     file = request.files['file']
-    language_name = request.form.get('language', 'English')
-    language_code = TO_LANGUAGE_CODE.get(language_name.lower(), 'en')
+    if file and allowed_file(file.filename):
+        # Use a secure filename
+        secure_file_name = secure_filename(file.filename)
+        # Create a temporary file
+        temp_dir = tempfile.gettempdir()
+        file_path = os.path.join(temp_dir, secure_file_name)
+        file.save(file_path)
 
-    # Save the audio file temporarily
-    file_path = 'temp_audio_file'  # Ensure to use the correct file extension
-    file.save(file_path)
+        language_name = request.form.get('language', 'English').lower()
+        language_code = TO_LANGUAGE_CODE.get(language_name, 'en')
 
-    # Transcribe the audio file
-    result = model.transcribe(file_path, task="transcribe", language=language_code)
-    return jsonify({'transcript': result['text']}), 200
+        try:
+            # Transcribe the audio file
+            result = model.transcribe(file_path, task="transcribe", language=language_code)
+            os.remove(file_path)  # Clean up the stored file
+            return jsonify({'transcript': result['text']}), 200
+        except Exception as e:
+            os.remove(file_path)  # Clean up the stored file even if there's an error
+            return jsonify({'error': str(e)}), 500
+    else:
+        return jsonify({'error': 'Invalid file type'}), 400
 
 
 if __name__ == '__main__':

@@ -3,24 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SoundScribe</title>
+    <title>SoundScribe - Easy Audio Transcription</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon"> <!-- Add a favicon -->
 </head>
 <body>
     <div class="container">
         <h1>SoundScribe</h1>
+        <p class="lead">The easiest way to convert speech to text.</p> <!-- Add a tagline -->
         <form id="uploadForm">
-            <label for="fileUpload" class="file-upload">
-                Choose File
-                <input type="file" id="fileUpload" name="file" required>
-            </label>
-            <label for="languageSelect" class="language-select">
-                Select Language
-                <select id="languageSelect" name="language">
-                    <option value="english">English</option>
-                    <!-- Add more language options here -->
-                </select>
-            </label>
+            <div class="file-upload">
+                <label for="fileUpload">
+                    Choose File
+                    <input type="file" id="fileUpload" name="file" required>
+                </label>
+            </div>
+            <div class="language-select">
+                <label for="languageSelect">
+                    Select Language
+                    <select id="languageSelect" name="language">
+                        <option value="english">English</option>
+                        <!-- Add more language options here -->
+                    </select>
+                </label>
+            </div>
             <button type="submit">Transcribe</button>
         </form>
         <div id="transcriptionResult"></div>

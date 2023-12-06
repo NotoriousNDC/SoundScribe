@@ -1,33 +1,98 @@
-document.getElementById('uploadForm').addEventListener('submit', function(event) {
+document.addEventListener('DOMContentLoaded', function() {
+    const uploadForm = document.getElementById('uploadForm');
+    uploadForm.addEventListener('submit', handleFormSubmit);
+});
+
+function handleFormSubmit(event) {
     event.preventDefault();
-    var formData = new FormData(this);
-    
-    // Disable the button and show a loading icon
-    var submitButton = document.querySelector('button[type="submit"]');
-    submitButton.disabled = true;
-    submitButton.textContent = 'Transcribing...'; // Change the button text to indicate loading
-    // Optionally, add a loading spinner
-    var spinner = document.createElement('img');
-    spinner.src = 'loading-spinner.gif'; // Add the path to your loading spinner GIF
-    spinner.alt = 'Loading...';
-    submitButton.parentNode.insertBefore(spinner, submitButton.nextSibling);
+    const formData = new FormData(event.target);
+    setButtonState(true);
+
+    removeExistingSpinner();
+    showSpinner();
 
     fetch('/transcribe', {
         method: 'POST',
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok: ' + response.statusText);
+        }
+        return response.json();
+    })
     .then(data => {
-        document.getElementById('transcriptionResult').innerText = data.transcript;
-        // Re-enable the button and remove the loading icon after the fetch is complete
-        submitButton.disabled = false;
-        submitButton.textContent = 'Transcribe'; // Reset button text
-        spinner.remove(); // Remove the loading spinner
+        if (data.transcript) {
+            displayTranscriptionResult(data.transcript);
+        } else {
+            throw new Error('No transcription result in the response');
+        }
     })
     .catch(error => {
-        console.error('Error:', error);
-        submitButton.disabled = false;
-        submitButton.textContent = 'Transcribe'; // Reset button text on error
-        spinner.remove(); // Remove the loading spinner on error
+        displayError(error.message);
+    })
+    .finally(() => {
+        setButtonState(false);
+        hideSpinner();
     });
-});
+}
+
+
+function setButtonState(isDisabled) {
+    const submitButton = document.querySelector('button[type="submit"]');
+    submitButton.disabled = isDisabled;
+    submitButton.textContent = isDisabled ? 'Transcribing...' : 'Transcribe';
+}
+
+function showSpinner() {
+    const spinnerContainer = createSpinnerContainer();
+    const form = document.getElementById('uploadForm');
+    form.appendChild(spinnerContainer); // Append the spinner container to the form
+    spinnerContainer.style.display = 'flex'; // Make sure to set the display to 'flex'
+}
+
+function createSpinnerContainer() {
+    const spinnerContainer = document.createElement('div');
+    spinnerContainer.id = 'spinnerContainer';
+    spinnerContainer.style.display = 'none'; // Hide initially
+    spinnerContainer.style.justifyContent = 'center';
+    spinnerContainer.style.alignItems = 'center';
+    spinnerContainer.style.height = '100px';
+
+    const spinner = document.createElement('img');
+    spinner.src = '/static/loading_spinner.gif'; // Ensure this path is correct.
+    spinner.alt = 'Loading...';
+    spinner.id = 'loadingSpinner';
+    spinner.style.width = '50px'; // Adjust size as needed
+    spinner.style.height = '50px'; // Adjust size as needed
+
+    spinnerContainer.appendChild(spinner);
+    return spinnerContainer;
+}
+
+function hideSpinner() {
+    // Instead of removing the spinner container, you can simply hide it. This prevents potential issues if the DOM element is accessed after removal.
+    const spinnerContainer = document.getElementById('spinnerContainer');
+    if (spinnerContainer) {
+        spinnerContainer.style.display = 'none'; // Hide the spinner container
+    }
+}
+
+function removeExistingSpinner() {
+    const existingSpinner = document.getElementById('loadingSpinner');
+    if (existingSpinner) {
+        existingSpinner.remove();
+    }
+}
+
+function displayTranscriptionResult(transcript) {
+    const resultContainer = document.getElementById('transcriptionResult');
+    resultContainer.innerText = transcript;
+    // Add ARIA updates if necessary, e.g., resultContainer.setAttribute('aria-live', 'polite');
+}
+
+function displayError(errorMessage) {
+    const resultContainer = document.getElementById('transcriptionResult');
+    resultContainer.textContent = errorMessage;
+    resultContainer.classList.add('error'); // Make sure you define an 'error' class in your CSS
+}
