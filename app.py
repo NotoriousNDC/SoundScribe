@@ -104,8 +104,6 @@ LANGUAGES = {
     "yue": "cantonese",
 }
 
-app = Flask(__name__, static_folder='static')
-
 # Create a dictionary mapping language names (in lower case) to their codes
 TO_LANGUAGE_CODE = {
     **{language.lower(): code for code, language in LANGUAGES.items()},
@@ -124,6 +122,7 @@ TO_LANGUAGE_CODE = {
     # ... (add any other aliases you need here) ...
 }
 
+app = Flask(__name__, static_folder='static')
 
 # Load the Whisper model
 model = whisper.load_model("base")

@@ -63,6 +63,8 @@ button:hover {
 }
 
 #transcriptionResult {
+    max-height: 400px; /* Adjust the max height as needed */
+    overflow-y: auto; /* Adds scroll to the y-axis if content overflows */
     margin-top: 20px;
     padding: 10px;
     border: 1px solid #ddd;
