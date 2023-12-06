@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from werkzeug.utils import secure_filename
 import tempfile
 import os
@@ -108,11 +108,6 @@ LANGUAGES = {
     "jw": "javanese",
     "su": "sundanese",
     "yue": "cantonese",
-}
-
-# Create a dictionary mapping language names (in lower case) to their codes
-TO_LANGUAGE_CODE = {
-    **{language.lower(): code for code, language in LANGUAGES.items()},
     "burmese": "my",
     "valencian": "ca",
     "flemish": "nl",
@@ -125,17 +120,23 @@ TO_LANGUAGE_CODE = {
     "sinhalese": "si",
     "castilian": "es",
     "mandarin": "zh",
-    # ... (add any other aliases you need here) ...
 }
+
+# Create a dictionary mapping language names (in lower case) to their codes
+# Create a dictionary mapping full language names to their codes
+TO_LANGUAGE_CODE = {
+    language: code for code, language in LANGUAGES.items()
+}
+
 
 app = Flask(__name__, static_folder='static')
 
 # Load the Whisper model
-model = whisper.load_model("base")
+model = whisper.load_model("tiny")
 
 @app.route('/')
 def index():
-    return app.send_static_file('index.html')
+    return render_template('index.html', TO_LANGUAGE_CODE=TO_LANGUAGE_CODE)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -143,31 +144,36 @@ def allowed_file(filename):
 
 @app.route('/transcribe', methods=['POST'])
 def transcribe():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file provided'}), 400
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        if file and allowed_file(file.filename):
+            secure_file_name = secure_filename(file.filename)
+            temp_dir = tempfile.gettempdir()
+            file_path = os.path.join(temp_dir, secure_file_name)
+            file.save(file_path)
 
-    file = request.files['file']
-    if file and allowed_file(file.filename):
-        # Use a secure filename
-        secure_file_name = secure_filename(file.filename)
-        # Create a temporary file
-        temp_dir = tempfile.gettempdir()
-        file_path = os.path.join(temp_dir, secure_file_name)
-        file.save(file_path)
-
-        language_name = request.form.get('language', 'English').lower()
-        language_code = TO_LANGUAGE_CODE.get(language_name, 'en')
-
-        try:
-            # Transcribe the audio file
-            result = model.transcribe(file_path, task="transcribe", language=language_code)
+            # Retrieve the selected language code using the full language name
+            language_name = request.form.get('language', 'English').lower()
+            language_code = TO_LANGUAGE_CODE.get(language_name, 'en')
+            
+            print(f"Selected language name: {language_name}")
+            print(f"Selected language code: {language_code}")
+            
+            # Perform transcription
+            result = model.transcribe(file_path)
+            
             os.remove(file_path)  # Clean up the stored file
             return jsonify({'transcript': result['text']}), 200
-        except Exception as e:
-            os.remove(file_path)  # Clean up the stored file even if there's an error
-            return jsonify({'error': str(e)}), 500
-    else:
-        return jsonify({'error': 'Invalid file type'}), 400
+        else:
+            return jsonify({'error': 'Invalid file type'}), 400
+    except Exception as e:
+        # If any error occurs, print it to the console and return an error response
+        print(f"An error occurred: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
 
 
 if __name__ == '__main__':

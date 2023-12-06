@@ -48,13 +48,12 @@ function showSpinner() {
     const spinnerContainer = createSpinnerContainer();
     const form = document.getElementById('uploadForm');
     form.appendChild(spinnerContainer); // Append the spinner container to the form
-    spinnerContainer.style.display = 'flex'; // Make sure to set the display to 'flex'
 }
 
 function createSpinnerContainer() {
     const spinnerContainer = document.createElement('div');
     spinnerContainer.id = 'spinnerContainer';
-    spinnerContainer.style.display = 'none'; // Hide initially
+    spinnerContainer.style.display = 'flex'; // Display as flex to center the spinner
     spinnerContainer.style.justifyContent = 'center';
     spinnerContainer.style.alignItems = 'center';
     spinnerContainer.style.height = '100px';
@@ -69,6 +68,7 @@ function createSpinnerContainer() {
     spinnerContainer.appendChild(spinner);
     return spinnerContainer;
 }
+
 
 function hideSpinner() {
     // Instead of removing the spinner container, you can simply hide it. This prevents potential issues if the DOM element is accessed after removal.

@@ -85,9 +85,12 @@ button:focus {
 }
 
 #loadingSpinner {
-    width: 100px; /* More reasonable default size */
-    height: 100px;
+    display: block; /* Will ensure the spinner appears on a new line if not using flexbox on the form */
+    margin: 10px auto; /* Centers the spinner horizontally in the container */
+    width: 50px; /* Set the width of the spinner */
+    height: 50px; /* Set the height of the spinner */
 }
+
 
 /* Responsive design for smaller screens */
 @media (max-width: 768px) {

@@ -22,9 +22,10 @@
                 <label for="languageSelect">
                     Select Language
                     <select id="languageSelect" name="language">
-                        <option value="english">English</option>
-                        <!-- Add more language options here -->
-                    </select>
+                        {% for language, code in TO_LANGUAGE_CODE.items() %}
+                            <option value="{{ language }}">{{ language.capitalize() }}</option>
+                        {% endfor %}
+                    </select>                                    
                 </label>
             </div>
             <button type="submit">Transcribe</button>
