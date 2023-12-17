@@ -9,15 +9,24 @@ import whisper
 # Import db and login_manager from extensions module
 from extensions import db, login_manager
 
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'secret_key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///C:/Users/ndcar/OneDrive/Documents/DEV/Translate Site/Project/site.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+def create_app():
+    app = Flask("app")
+    app.config['SECRET_KEY'] = 'secret_key'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///C:/Users/ndcar/OneDrive/Documents/DEV/Translate Site/Project/site.db'
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    # app.register_blueprint(api)
+    db.init_app(app)
+    login_manager.init_app(app)
+    login_manager.login_view = 'login'
 
-# Initialize extensions with the app
-db.init_app(app)
-login_manager.init_app(app)
-login_manager.login_view = 'login'
+    with app.app_context():
+        # Extensions like Flask-SQLAlchemy now know what the "current" app
+        # is while within this block. Therefore, you can now run........
+        db.app=app
+        db.create_all()
+        return app
+
+app = create_app()
 
 from models import User, Transcription
 # Your other code (routes, etc.)
@@ -146,11 +155,11 @@ TO_LANGUAGE_CODE = {
     language: code for code, language in LANGUAGES.items()
 }
 
-
 app = Flask(__name__, static_folder='static')
 
 # Load the Whisper model
 model = whisper.load_model("medium")
+
 
 @app.route('/')
 def index():
