@@ -5,13 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoundScribe - Easy Audio Transcription</title>
     <link rel="stylesheet" href="/static/style.css">
-    <link rel="icon" href="/static/favicon.ico" type="image/x-icon"> <!-- Add a favicon -->
+    <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
 </head>
 <body>
     <div class="container">
         <h1>SoundScribe</h1>
-        <p class="lead">The easiest way to convert speech to text.</p> <!-- Add a tagline -->
-        <form id="uploadForm">
+        <p class="lead">The easiest way to convert speech to text.</p>
+
+        {% if current_user.is_authenticated %}
+            <div class="dashboard">
+                <h2>Welcome, {{ current_user.username }}</h2>
+                <!-- Display user transcriptions or other user-specific content here -->
+            </div>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        {% else %}
+            <div class="auth-links">
+                <a href="{{ url_for('register') }}">Register</a> |
+                <a href="{{ url_for('login') }}">Login</a>
+            </div>
+        {% endif %}
+
+        <form id="uploadForm" class="{{ 'hidden' if not current_user.is_authenticated else '' }}">
             <div class="file-upload">
                 <label for="fileUpload">
                     Choose File

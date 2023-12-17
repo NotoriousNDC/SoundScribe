@@ -1,8 +1,26 @@
 from flask import Flask, request, jsonify, render_template
+from flask import flash, redirect, url_for
+from flask_login import current_user, login_user, logout_user, LoginManager
 from werkzeug.utils import secure_filename
 import tempfile
 import os
 import whisper
+
+# Import db and login_manager from extensions module
+from extensions import db, login_manager
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret_key'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///C:/Users/ndcar/OneDrive/Documents/DEV/Translate Site/Project/site.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Initialize extensions with the app
+db.init_app(app)
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+from models import User, Transcription
+# Your other code (routes, etc.)
 
 # Define the allowed extensions for audio files
 ALLOWED_EXTENSIONS = {'wav', 'mp3', 'flac', 'ogg', 'm4a'}
@@ -132,7 +150,7 @@ TO_LANGUAGE_CODE = {
 app = Flask(__name__, static_folder='static')
 
 # Load the Whisper model
-model = whisper.load_model("tiny")
+model = whisper.load_model("medium")
 
 @app.route('/')
 def index():
@@ -144,6 +162,8 @@ def allowed_file(filename):
 
 @app.route('/transcribe', methods=['POST'])
 def transcribe():
+    
+    
     try:
         if 'file' not in request.files:
             return jsonify({'error': 'No file provided'}), 400
@@ -166,7 +186,11 @@ def transcribe():
             result = model.transcribe(file_path)
             
             os.remove(file_path)  # Clean up the stored file
-            return jsonify({'transcript': result['text']}), 200
+            if current_user.is_authenticated:
+                new_transcription = Transcription(content=result['text'], user_id=current_user.id)
+                db.session.add(new_transcription)
+                db.session.commit()
+                
         else:
             return jsonify({'error': 'Invalid file type'}), 400
     except Exception as e:
@@ -174,7 +198,56 @@ def transcribe():
         print(f"An error occurred: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
 
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form['username']
+        email = request.form['email']
+        password = request.form['password']
+
+        # Check if user already exists
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            flash('Username already exists.')
+            return redirect(url_for('register'))
+
+        # Create new user
+        new_user = User(username=username, email=email)
+        new_user.password = password
+        db.session.add(new_user)
+        db.session.commit()
+
+        flash('Registration successful!')
+        return redirect(url_for('login'))
+
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        user = User.query.filter_by(username=username).first()
+        if user and user.verify_password(password):
+            login_user(user)
+            return redirect(url_for('index'))
+
+        flash('Invalid username or password.')
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True)

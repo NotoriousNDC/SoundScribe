@@ -96,3 +96,25 @@ function displayError(errorMessage) {
     resultContainer.textContent = errorMessage;
     resultContainer.classList.add('error'); // Make sure you define an 'error' class in your CSS
 }
+
+function fetchAndDisplayUserTranscriptions() {
+    fetch('/user_transcriptions') // Assuming you have an endpoint to get user transcriptions
+        .then(response => response.json())
+        .then(data => {
+            if (data.transcriptions) {
+                displayUserTranscriptions(data.transcriptions);
+            } else {
+                console.log('No transcriptions found for this user');
+            }
+        })
+        .catch(error => console.error('Error fetching transcriptions:', error));
+}
+
+function displayUserTranscriptions(transcriptions) {
+    const transcriptionsContainer = document.getElementById('userTranscriptions');
+    transcriptions.forEach(transcription => {
+        const transcriptionElement = document.createElement('p');
+        transcriptionElement.textContent = transcription.content;
+        transcriptionsContainer.appendChild(transcriptionElement);
+    });
+}

@@ -123,3 +123,58 @@ button:disabled {
     color: red;
     /* Other styling as needed */
 }
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.auth-form input[type="text"],
+.auth-form input[type="email"],
+.auth-form input[type="password"] {
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+.auth-form button[type="submit"] {
+    background-color: #428bca; /* A different color for authentication actions */
+}
+
+.auth-form button[type="submit"]:hover {
+    background-color: #3071a9; /* Darker shade for hover */
+}
+
+.dashboard {
+    padding: 20px;
+    text-align: left;
+}
+
+.dashboard h2 {
+    color: #333;
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+}
+
+.dashboard .transcription-item {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.alert {
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    color: #3c763d; /* Text color */
+    background-color: #dff0d8; /* Background color */
+    border-color: #d6e9c6; /* Border color */
+}
+
+.alert-error {
+    color: #a94442;
+    background-color: #f2dede;
+    border-color: #ebccd1;
+}
+
